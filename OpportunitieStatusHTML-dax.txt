@@ -1,0 +1,95 @@
+OppTableHTML = 
+VAR TextLightGrey = "#e0e0e0" 
+VAR TextGreyBlue = "#8e9aaf" 
+VAR ElectricBlue = "#3b82f6" 
+VAR BorderCard = "rgba(255, 255, 255, 0.20)" 
+VAR BackgHeader = "#0b0e14"
+VAR BackgDetail = "#141822"
+
+-- 1. Header
+VAR Header = 
+"<div style='font-family: Segoe UI, sans-serif; display: flex; background-color: " & BackgHeader & "; padding: 15px 10px; border-bottom: 2px solid " & ElectricBlue & "; font-size: 14px; font-weight: 800; color: " & ElectricBlue & "; text-transform: uppercase;'>
+    <div style='flex: 4;'>Title</div>
+    <div style='flex: 3;'>Agency</div>
+    <div style='flex: 1.5;'>Due Date</div>
+    <div style='flex: 1; text-align: center;'>Status</div>
+    <div style='width: 35px;'></div>
+</div>"
+
+-- 2. Accordion
+VAR TableRows = 
+CONCATENATEX(
+    TOPN(1000, opportunities, [Due_Date], DESC),
+    
+    VAR DaysDiff = DATEDIFF(TODAY(), [Due_Date], DAY)
+    VAR StatusText = IF(DaysDiff < 0, "EXPIRED", "ACTIVE")
+    VAR StatusColor = IF(DaysDiff < 0, "#ef4444", "#22c55e")
+    
+    RETURN
+    "<details style='font-family: Segoe UI, sans-serif; border-bottom: 1px solid " & BorderCard & "; background-color: #0b0e14;'>
+        
+        <summary style='list-style: none; cursor: pointer; padding: 12px 10px; display: flex; align-items: center;'>
+            
+            <!-- TITLE (Flex 4) -->
+            <div style='flex: 4; padding-right: 20px;'>
+                <div style='font-weight: 700; font-size: 13px; color: white;'>" & SUBSTITUTE([Title], [City], "") & "</div>
+            </div>
+
+            <!-- AGENCY (Flex 3) -->
+            <div style='flex: 3; padding-right: 15px;'>
+                <div style='font-size: 13px; font-weight: 600; color: white;'>" & COALESCE(opportunities[Statal_Agency], "---") & "</div>
+                <div style='font-size: 14px; color: " & TextGreyBlue & ";'>" & 
+                    COALESCE([City], "---") & ", " & COALESCE([State], "---") & 
+                "</div>
+            </div>
+
+            <!-- DUE DATE (Flex 1.5) -->
+            <div style='flex: 1.5;'>
+                <div style='font-size: 13px; font-weight: 600; color: white;'>" & FORMAT([Due_Date], "MMM dd, yyyy") & "</div>
+                <div style='font-size: 13px; color: " & TextGreyBlue & ";'>" & 
+                    IF(DaysDiff < 0, "Expired " & ABS(DaysDiff) & " d. ago", DaysDiff & " d. left") & 
+                "</div>
+            </div>
+
+            <!-- STATUS (Flex 1) -->
+            <div style='flex: 1; text-align: center;'>
+                <span style='background: " & StatusColor & "; color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;'>" & StatusText & "</span>
+            </div>
+
+            <div style='width: 35px; text-align: right; color: " & TextGreyBlue & "; font-size: 12px;'>▼</div>
+        </summary>
+
+        <!-- INTERN DETAIL
+        <div style='padding: 20px; background-color: " & BackgDetail & "; border-top: 1px dashed " & BorderCard & ";'>
+            <div style='display: flex; justify-content: space-between; margin-bottom: 20px;'>
+                <div style='flex: 1;'>
+                    <div style='color: " & TextGreyBlue & "; font-size: 11px; text-transform: uppercase; font-weight: 600;'>Posting Date</div>
+                    <div style='color: white; font-size: 14px; font-weight: 700; margin-top: 5px;'>" & FORMAT(opportunities[Posted_Date], "MMMM d, yyyy") & "</div>
+                </div>
+                <div style='flex: 1;'>
+                    <div style='color: " & TextGreyBlue & "; font-size: 11px; text-transform: uppercase; font-weight: 600;'>Due Date</div>
+                    <div style='color: white; font-size: 14px; font-weight: 700; margin-top: 5px;'>" & FORMAT([Due_Date], "MMMM d, yyyy") & "</div>
+                </div>
+                <div style='flex: 1;'>
+                    <div style='color: " & TextGreyBlue & "; font-size: 11px; text-transform: uppercase; font-weight: 600;'>Estimated Value</div>
+                    <div style='color: white; font-size: 16px; font-weight: 800; margin-top: 5px;'>" & FORMAT([val_avg_low], "$ #,0") & " - " & FORMAT([val_avg_high], "$ #,0") & "</div>
+                </div>
+            </div>
+            <div style='margin-bottom: 20px;'>
+                <div style='color: white; font-size: 14px; font-weight: 700; margin-bottom: 5px;'>Description</div>
+                <div style='color: " & TextLightGrey & "; font-size: 12px; line-height: 1.5;'>" & COALESCE([Description], "No description available.") & "</div>
+            </div>
+            <div style='background: rgba(59, 130, 246, 0.1); padding: 15px; border-left: 4px solid " & AzulElectrico & "; border-radius: 4px;'>
+                <div style='color: " & ElectricBlue & "; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;'>AI Summary</div>
+                <div style='color: " & TextLightGrey & "; font-size: 12px; line-height: 1.4; font-style: italic;'>" & 
+                    COALESCE([AI_summary], "No AI summary available.") & 
+                "</div>
+            </div>
+        </div>
+    </details>",
+    "",
+    [Due_Date], DESC
+)
+
+RETURN
+"<div style='background-color: #080c17; border-radius: 8px; overflow: hidden;'>" & Header & TableRows & "</div>"
